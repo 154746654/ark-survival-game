@@ -1,0 +1,126 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>人性天平 · 方舟求生</title>
+<meta name="description" content="《人性天平：方舟求生》——原创桌游改编的网页版明暗抉择逃生游戏。">
+<link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>⚖️</text></svg>">
+<style>
+  :root {
+    --bg:#06090f; --ink:#eaeffc; --sub:#8fa0bd; --faint:#5c6b88;
+    --panel:rgba(255,255,255,.035); --panel2:rgba(255,255,255,.06);
+    --line:rgba(150,175,230,.14); --line2:rgba(150,175,230,.28); --gold:#f0b429;
+  }
+  * { margin:0; padding:0; box-sizing:border-box; }
+  body {
+    min-height:100vh; display:flex; align-items:center; justify-content:center; padding:22px;
+    background: var(--bg);
+    color:var(--ink); font-family:-apple-system,"PingFang SC","Microsoft YaHei",sans-serif; line-height:1.6;
+  }
+  /* 海报背景 + 压暗遮罩 */
+  body::before { content:''; position:fixed; inset:0; z-index:-2;
+    background:url('/img/bg-poster.jpg') center/cover no-repeat; }
+  body::after { content:''; position:fixed; inset:0; z-index:-1;
+    background:linear-gradient(180deg, rgba(6,9,15,.50), rgba(6,9,15,.74) 55%, rgba(6,9,15,.90)); }
+  .wrap { max-width:780px; width:100%; text-align:center; }
+  .emblem { font-size:64px; filter:drop-shadow(0 0 30px rgba(240,180,41,.4)); }
+  h1 { margin-top:10px; font-size:clamp(26px,5vw,38px); letter-spacing:12px; font-weight:800; text-shadow:0 0 40px rgba(240,180,41,.25); }
+  .sub { margin-top:8px; color:var(--faint); letter-spacing:5px; font-size:13px; }
+  .rule { margin:26px auto 0; max-width:600px; background:rgba(10,16,28,.72); border:1px solid var(--line); border-radius:16px; padding:18px 24px; font-size:14px; color:var(--sub); backdrop-filter:blur(8px); -webkit-backdrop-filter:blur(8px); }
+  .rule b { color:var(--gold); }
+  .doors { display:flex; gap:16px; margin-top:26px; flex-wrap:wrap; justify-content:center; }
+  .door { flex:1; min-width:250px; cursor:pointer; border-radius:18px; padding:28px 20px; border:1px solid var(--line);
+    background:rgba(10,16,28,.72); backdrop-filter:blur(8px); -webkit-backdrop-filter:blur(8px);
+    transition:transform .18s, border-color .18s, box-shadow .18s; }
+  .door:hover { transform:translateY(-4px); border-color:var(--gold); box-shadow:0 14px 44px rgba(232,150,30,.15); }
+  .door .icon { font-size:42px; }
+  .door h2 { margin-top:10px; font-size:19px; letter-spacing:4px; text-shadow:0 2px 12px rgba(0,0,0,.6); }
+  .door p { margin-top:8px; font-size:12.5px; color:#b9c7e2; }
+  .panel { display:none; margin-top:24px; }
+  .panel.show { display:block; }
+  .panel input { backdrop-filter:blur(6px); }
+  .msg { text-shadow:0 1px 6px rgba(0,0,0,.7); }
+  input { width:250px; padding:12px 16px; border-radius:12px; border:1px solid var(--line2); background:rgba(10,16,28,.9);
+    color:var(--ink); font-size:15.5px; text-align:center; outline:none; }
+  input:focus { border-color:var(--gold); }
+  .btn { margin-left:10px; padding:12px 28px; border-radius:12px; border:none; cursor:pointer; font-size:15px; font-weight:600;
+    letter-spacing:3px; color:#221805; background:linear-gradient(135deg,#f7c948,#e8961e); }
+  .btn:hover { filter:brightness(1.08); }
+  .msg { margin-top:12px; font-size:13px; color:#ff9b9b; min-height:18px; }
+  .foot { margin-top:34px; font-size:11.5px; color:rgba(143,160,189,.75); letter-spacing:1px; line-height:1.9; }
+  .foot b { color:rgba(240,180,41,.85); font-weight:600; }
+  .foot a { color:rgba(143,160,189,.85); text-decoration:underline; text-underline-offset:3px; }
+</style>
+</head>
+<body>
+<div class="wrap">
+  <div class="emblem">⚖️</div>
+  <h1>人性天平 · 方舟求生</h1>
+  <div class="sub">—— 明暗抉择逃生游戏 · 第24号方舟 ——</div>
+  <div class="rule">
+    末日降临，这艘方舟是文明最后的火种。然而，船上仅有的资源，只够 <b>6 人</b> 生存至新世界。<br>
+    存在两条道路：<b>"明面"</b> 的合作与选举，与 <b>"暗面"</b> 的博弈与淘汰。你的选择，将定义你是谁。
+  </div>
+  <div class="doors">
+    <div class="door" onclick="showPanel('playerPanel')">
+      <div class="icon">🎫</div>
+      <h2>玩家入口</h2>
+      <p>登船签名 → 抽取角色卡 → 查看阵营与技能<br>投票 · 结识 · 暗面行动</p>
+    </div>
+    <div class="door" onclick="showPanel('hostPanel')">
+      <div class="icon">🎖️</div>
+      <h2>主持人入口</h2>
+      <p>仲裁官控制台<br>向导式流程 · 投票统计 · 资源结算 · 终局叙事</p>
+    </div>
+  </div>
+  <div class="panel" id="playerPanel">
+    <input id="proom" placeholder="房间号（问主持人要）" maxlength="6" style="text-transform:uppercase;width:250px;display:block;margin:0 auto 10px;letter-spacing:4px">
+    <input id="pname" placeholder="输入你的名字（登船签名）" maxlength="12">
+    <button class="btn" onclick="join()">登 船</button>
+    <div class="msg" id="joinMsg"></div>
+    <div style="margin-top:6px;font-size:12px;color:var(--faint)">🔁 已经登过船又退出了？输入<b style="color:var(--gold)">相同的房间号和名字</b>，即可回到你的角色（包括游戏进行中）</div>
+  </div>
+  <div class="panel" id="hostPanel">
+    <input id="hcode" placeholder="主持人口令" type="password">
+    <input id="hroom" placeholder="房间号：第一次进入不输入，系统自动生成" maxlength="6" style="text-transform:uppercase;width:250px;display:block;margin:10px auto 0;letter-spacing:4px">
+    <button class="btn" onclick="hostEnter()">进入控制台</button>
+    <div class="msg" id="hostMsg"></div>
+    <div style="font-size:12px;color:var(--faint)">生成房间号后报给学生登船；再次主持输入已有房间号即可回到同一局</div>
+  </div>
+  <div class="foot">
+    本作品采用 <b>CC BY-NC-SA 4.0</b> 授权 · 可自由用于教学与朋友聚会 · <b>未经授权禁止商用</b><br>
+    <a href="/LICENSE.txt" target="_blank">查看完整授权声明 →</a>
+  </div>
+</div>
+<script>
+function showPanel(id) {
+  document.querySelectorAll('.panel').forEach(p => p.classList.remove('show'));
+  document.getElementById(id).classList.add('show');
+}
+async function join() {
+  const name = document.getElementById('pname').value.trim();
+  const room = document.getElementById('proom').value.trim().toUpperCase();
+  const msg = document.getElementById('joinMsg');
+  if (!room) { msg.textContent = '请先输入房间号（问主持人要）'; return; }
+  if (!name) { msg.textContent = '请先签名'; return; }
+  const r = await fetch('/api/join', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ name, room }) });
+  const d = await r.json();
+  if (d.error) { msg.textContent = d.error; return; }
+  localStorage.setItem('ark_me', JSON.stringify({ id: d.id, name: d.name, room }));
+  location.href = '/player.html';
+}
+async function hostEnter() {
+  const code = document.getElementById('hcode').value;
+  const room = document.getElementById('hroom').value.trim().toUpperCase();
+  const msg = document.getElementById('hostMsg');
+  const r = await fetch('/api/host', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ code, cmd: room ? 'enterRoom' : 'createRoom', room }) });
+  const d = await r.json();
+  if (d.error) { msg.textContent = d.error; return; }
+  localStorage.setItem('ark_host_code', code);
+  localStorage.setItem('ark_host_room', d.room);
+  location.href = '/host.html';
+}
+</script>
+</body>
+</html>

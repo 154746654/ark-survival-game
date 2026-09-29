@@ -1,0 +1,535 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>玩家端 · 人性天平 · 方舟求生</title>
+<link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>⚖️</text></svg>">
+<style>
+  :root {
+    --bg: #06090f; --ink: #eaeffc; --sub: #8fa0bd; --faint: #5c6b88;
+    --panel: rgba(255,255,255,.035); --panel2: rgba(255,255,255,.06);
+    --line: rgba(150,175,230,.14); --line2: rgba(150,175,230,.28);
+    --gold: #f0b429;
+    --order: #4f8dff; --free: #f0a13a; --moral: #ff6b6b;
+  }
+  * { margin:0; padding:0; box-sizing:border-box; }
+  html { -webkit-text-size-adjust:100%; }
+  body {
+    background:
+      radial-gradient(1000px 500px at 50% -100px, rgba(64,105,190,.22), transparent 60%),
+      radial-gradient(700px 400px at 85% 110%, rgba(190,120,40,.10), transparent 60%),
+      var(--bg);
+    color: var(--ink); font-family: -apple-system, "PingFang SC", "Microsoft YaHei", sans-serif;
+    min-height: 100vh; padding: 14px 14px 80px; line-height: 1.6;
+  }
+  .wrap { max-width: 860px; margin: 0 auto; }
+  .top { display:flex; justify-content:space-between; align-items:center; gap:8px; padding:6px 2px 12px; flex-wrap:wrap; }
+  .brand { font-size:13px; letter-spacing:3px; color:var(--faint); font-weight:600; }
+  .brand b { color: var(--gold); }
+  .chips { display:flex; gap:8px; flex-wrap:wrap; }
+  .chip { background:var(--panel2); border:1px solid var(--line); border-radius:99px; padding:4px 13px; font-size:12.5px; color:var(--sub); }
+  .chip b { color: var(--ink); }
+  .chip.gold { border-color: rgba(240,180,41,.4); color: var(--gold); }
+  .phase { position:relative; overflow:hidden; border:1px solid var(--line2); border-radius:18px; padding:22px 22px 18px;
+    background: linear-gradient(160deg, rgba(47,80,150,.30), rgba(20,28,48,.55)); margin-bottom:8px; }
+  .phase::after { content:''; position:absolute; inset:0; background:radial-gradient(400px 120px at 80% 0%, rgba(240,180,41,.12), transparent 70%); pointer-events:none; }
+  .phase .k { font-size:12px; letter-spacing:4px; color:var(--gold); font-weight:700; }
+  .phase .t { font-size:22px; font-weight:800; letter-spacing:2px; margin-top:2px; }
+  .phase .d { font-size:13.5px; color:var(--sub); margin-top:6px; max-width:640px; }
+  .steps { display:flex; gap:6px; margin-top:14px; flex-wrap:wrap; }
+  .step { font-size:11px; padding:3px 10px; border-radius:99px; border:1px solid var(--line); color:var(--faint); }
+  .step.on { border-color:rgba(240,180,41,.55); color:var(--gold); background:rgba(240,180,41,.08); }
+  .sec { margin-top:18px; }
+  .sec > h3 { font-size:13px; letter-spacing:3px; color:var(--sub); font-weight:700; margin:0 2px 10px; display:flex; align-items:center; gap:8px; }
+  .sec > h3::after { content:''; flex:1; height:1px; background:var(--line); }
+  .card { background:var(--panel); border:1px solid var(--line); border-radius:16px; padding:18px; }
+  .btn { display:inline-block; padding:10px 24px; border-radius:12px; border:none; cursor:pointer; font-size:14px; font-weight:600;
+    letter-spacing:1px; color:#221805; background:linear-gradient(135deg, #f7c948, #e8961e); transition: filter .15s, transform .15s; }
+  .btn:hover { filter:brightness(1.08); transform:translateY(-1px); }
+  .btn:disabled { opacity:.4; cursor:not-allowed; transform:none; }
+  .btn.ghost { background:transparent; color:var(--ink); border:1px solid var(--line2); }
+  .btn.danger { background:linear-gradient(135deg,#ff7b6b,#d63b2f); color:#fff; }
+  .btn.green { background:linear-gradient(135deg,#4cd98a,#1e9e5c); color:#06281a; }
+  .btn.sm { padding:6px 14px; font-size:12.5px; border-radius:9px; }
+  .pic-frame { border:1px solid var(--line2); border-radius:14px; overflow:hidden; background:linear-gradient(170deg,#1b2436,#0d1320); flex:none; }
+  .pic-frame img { display:block; width:100%; height:100%; object-fit:contain; }
+  .pic-fb { width:100%; height:100%; display:flex; align-items:center; justify-content:center; font-weight:800; color:#fff; }
+  .mycard { display:flex; gap:18px; flex-wrap:wrap; }
+  .mycard .frame { width:190px; height:285px; }
+  .info { flex:1; min-width:250px; font-size:13.5px; }
+  .info .rn { font-size:20px; font-weight:800; letter-spacing:1px; }
+  .fac { display:inline-block; font-size:11px; padding:2px 9px; border-radius:99px; font-weight:600; vertical-align:2px; }
+  .fac.order { background:rgba(79,141,255,.16); color:#9cc0ff; border:1px solid rgba(79,141,255,.4); }
+  .fac.free { background:rgba(240,161,58,.14); color:#ffd39a; border:1px solid rgba(240,161,58,.4); }
+  .fac.moral { background:rgba(255,107,107,.14); color:#ffadad; border:1px solid rgba(255,107,107,.4); }
+  .krow { margin-top:9px; font-size:13px; line-height:1.75; }
+  .kl { color:var(--gold); font-weight:700; font-size:12px; letter-spacing:1px; }
+  .kv2 { color:#c3cfe6; }
+  .secret { color:#ff9b9b; }
+  .roster { display:grid; grid-template-columns:repeat(auto-fill, minmax(215px,1fr)); gap:11px; }
+  .pl { background:var(--panel); border:1px solid var(--line); border-radius:14px; padding:11px; cursor:pointer; transition:border-color .15s; }
+  .pl:hover { border-color:var(--line2); }
+  .pl.dead { opacity:.42; filter:grayscale(.9); }
+  .pl .head { display:flex; gap:10px; align-items:center; }
+  .pl .pt { width:46px; height:64px; border-radius:9px; overflow:hidden; flex:none; border:1px solid var(--line); background:#141c2c; }
+  .pl .pt img { width:100%; height:100%; object-fit:cover; object-position:top center; display:block; }
+  .pl .pt .pic-fb { font-size:17px; }
+  .pl .nm { font-weight:800; font-size:14.5px; }
+  .pl .rl { font-size:11.5px; color:var(--sub); margin-top:2px; }
+  .pl .vv { display:none; margin-top:10px; padding-top:9px; border-top:1px dashed var(--line); font-size:12px; color:#b7c4dd; line-height:1.75; }
+  .pl.open .vv { display:block; }
+  .pl .caret { margin-left:auto; color:var(--faint); font-size:11px; flex:none; }
+  .votegrid { display:grid; grid-template-columns:repeat(auto-fill,minmax(190px,1fr)); gap:9px; }
+  .vline { display:flex; align-items:center; gap:9px; padding:7px 9px; border-radius:11px; border:1px solid var(--line);
+    cursor:pointer; font-size:13px; background:var(--panel); transition:all .12s; }
+  .vline:hover { border-color:var(--line2); }
+  .vline.sel { border-color:var(--gold); background:rgba(240,180,41,.10); box-shadow:0 0 0 1px var(--gold) inset; }
+  .vline .pt { width:34px; height:46px; border-radius:7px; overflow:hidden; flex:none; background:#141c2c; }
+  .vline .pt img { width:100%; height:100%; object-fit:cover; object-position:top; display:block; }
+  .vline .pt .pic-fb { font-size:13px; }
+  .slots { display:flex; gap:7px; margin-bottom:12px; align-items:center; flex-wrap:wrap; }
+  .slot { width:30px; height:30px; border-radius:50%; border:1.5px solid var(--line2); display:flex; align-items:center; justify-content:center; font-size:12px; color:var(--faint); }
+  .slot.on { background:var(--gold); border-color:var(--gold); color:#221805; font-weight:800; }
+  .evt { background:rgba(0,0,0,.28); border:1px solid var(--line); border-radius:12px; padding:12px 15px; font-size:13px; line-height:1.95; color:#c9d5ea; }
+  .rankrow { display:flex; align-items:center; gap:11px; padding:8px 12px; border-radius:11px; margin-bottom:6px; background:var(--panel); font-size:13.5px; border:1px solid transparent; }
+  .rankrow.top6 { border-color:rgba(240,180,41,.45); background:rgba(240,180,41,.07); }
+  .rankrow .no { width:26px; font-weight:800; color:var(--gold); }
+  .ending { white-space:pre-wrap; font-size:14.5px; line-height:2.15; color:#dce5f5; }
+  .big { font-size:17px; font-weight:800; color:#fff; }
+  .msg { font-size:13px; color:#ff9b9b; min-height:18px; margin-top:8px; }
+  .ok { color:#7ce3a8 !important; }
+  select { padding:8px 12px; border-radius:9px; border:1px solid var(--line2); background:#0d1524; color:var(--ink); font-size:13.5px; }
+  .dead-banner { border:1px solid rgba(255,107,107,.4); background:rgba(150,30,30,.22); border-radius:14px; padding:14px; text-align:center; letter-spacing:3px; color:#ffb3b3; font-size:15px; margin-top:10px; }
+  .center { text-align:center; }
+  .logo { font-size:44px; filter:drop-shadow(0 0 22px rgba(240,180,41,.35)); }
+  /* 初进入欢迎页 · 角色全家福背景 */
+  #secIntro .card { position:relative; overflow:hidden; background:#0d1422; padding:30px 20px; }
+  #secIntro .card::before { content:''; position:absolute; inset:0;
+    background:url('/img/bg-roster.jpg') center/cover no-repeat; opacity:.45; }
+  #secIntro .card::after { content:''; position:absolute; inset:0;
+    background:linear-gradient(180deg, rgba(6,9,15,.30), rgba(6,9,15,.55) 45%, rgba(6,9,15,.88)); }
+  #secIntro .card > * { position:relative; z-index:1; }
+  /* 页内弹窗 / 轻提示（替代浏览器原生 confirm/alert） */
+  #dlg { position:fixed; inset:0; z-index:80; display:none; align-items:center; justify-content:center; padding:20px;
+    background:rgba(3,6,12,.72); backdrop-filter:blur(3px); }
+  #dlg.show { display:flex; }
+  .dlgbox { max-width:460px; width:100%; background:#0d1422; border:1px solid var(--line2); border-radius:18px; padding:22px; }
+  .dlgbox h4 { font-size:17px; font-weight:800; }
+  .dlgbox .dbo { margin-top:9px; font-size:13.5px; color:var(--sub); line-height:1.8; }
+  .dlgbtns { display:flex; gap:10px; justify-content:flex-end; margin-top:18px; }
+  #toast { position:fixed; left:50%; bottom:30px; transform:translateX(-50%) translateY(16px); z-index:90;
+    background:#101a2c; border:1px solid var(--line2); border-radius:12px; padding:10px 18px; font-size:13.5px;
+    color:var(--ink); opacity:0; transition:opacity .25s, transform .25s; pointer-events:none; max-width:86vw; text-align:center; }
+  #toast.show { opacity:1; transform:translateX(-50%) translateY(0); }
+  #toast.good { border-color:rgba(76,217,138,.5); }
+  #toast.bad { border-color:rgba(255,107,107,.55); }
+</style>
+</head>
+<body>
+<div class="wrap">
+  <div class="top">
+    <div class="brand">⚖️ 人性天平 <b>· 方舟求生</b></div>
+    <div class="chips">
+      <span class="chip">🏠 房间 <b id="roomVal">…</b></span>
+      <span class="chip">🎫 <b id="who">…</b></span>
+      <span class="chip gold">SP <b id="spVal">…</b></span>
+      <span class="chip">存活 <b id="aliveVal">…</b></span>
+      <span class="chip">第 <b id="roundVal">—</b> 轮</span>
+    </div>
+  </div>
+
+  <div class="phase">
+    <div class="k" id="phK">连接中…</div>
+    <div class="t" id="phT"></div>
+    <div class="d" id="phD"></div>
+    <div class="steps" id="phSteps"></div>
+  </div>
+  <div id="deadBanner" class="dead-banner" style="display:none">☠️ 你已出局 —— 以幽灵视角继续观察这艘方舟</div>
+
+  <div class="sec" id="secIntro" style="display:none">
+    <div class="card center">
+      <div class="logo">🚢</div>
+      <div class="big" style="margin-top:8px">欢迎登船，第24号方舟的候选者！</div>
+      <div class="kv2" style="margin-top:10px">末日降临，这艘方舟是文明最后的火种。<br>船上仅有的资源，只够 <b style="color:var(--gold)">6 人</b> 生存至新世界。请等待仲裁官宣布流程。</div>
+    </div>
+  </div>
+
+  <div class="sec" id="secDraw" style="display:none">
+    <h3>抽取角色卡</h3>
+    <div class="card center" id="drawBox">
+      <div class="kv2" style="margin-bottom:14px">命运的时刻到了。点击按钮，随机抽取你的身份卡——默读，并融入你的角色。</div>
+      <button class="btn" id="drawBtn" onclick="draw()">🎲 抽取角色卡</button>
+      <div class="msg" id="drawMsg"></div>
+    </div>
+  </div>
+
+  <div class="sec" id="secMyCard" style="display:none">
+    <h3>我的角色卡（秘密仅自己可见）</h3>
+    <div class="card mycard" id="myCard"></div>
+  </div>
+
+  <div class="sec" id="secTeam" style="display:none">
+    <h3>组队结识</h3>
+    <div class="card">
+      <div class="kv2" style="margin-bottom:12px">请与身边的小伙伴自由组队并结识。注意：<b style="color:var(--gold)">每名玩家每轮都拥有 6 张选票</b>（可以投自己），投票时各自行使。选择你的小组编号：</div>
+      <select id="groupSel" onchange="setGroup()"><option value="1">第 1 组</option><option value="2">第 2 组</option><option value="3">第 3 组</option><option value="4">第 4 组</option><option value="5">第 5 组</option><option value="6">第 6 组</option><option value="7">第 7 组</option><option value="8">第 8 组</option><option value="9">第 9 组</option></select>
+      <span class="kv2" style="margin-left:10px;font-size:13px">记住你的队友——明面同舟共济，暗面各自为营。</span>
+    </div>
+  </div>
+
+  <div class="sec" id="secSpeech" style="display:none">
+    <h3>明面陈述</h3>
+    <div class="card kv2" id="speechText"></div>
+  </div>
+
+  <div class="sec" id="secKill" style="display:none">
+    <h3>上一暗面 · 杀人记录（由谁杀，杀了谁）</h3>
+    <div class="card" id="killBox"></div>
+  </div>
+
+  <div class="sec" id="secVote" style="display:none">
+    <h3>明面投票</h3>
+    <div class="card">
+      <div class="slots" id="slotRow"></div>
+      <div class="votegrid" id="voteList"></div>
+      <div style="margin-top:14px"><button class="btn" id="voteBtn" onclick="submitVote()">🗳️ 提交选票</button>
+      <span class="kv2" id="voteDone" style="margin-left:12px;font-size:12.5px"></span></div>
+      <div class="msg" id="voteMsg"></div>
+    </div>
+  </div>
+
+  <div class="sec" id="secDark" style="display:none">
+    <h3>暗面回合 · 技能</h3>
+    <div class="card" id="darkBox"></div>
+  </div>
+
+  <div class="sec" id="secRank" style="display:none">
+    <h3>票选排行 · 累计票数（前六 ⭐）</h3>
+    <div class="card" id="rankBox"></div>
+  </div>
+
+  <div class="sec" id="secSettle" style="display:none">
+    <h3>结算日志</h3>
+    <div class="card evt" id="settleBox"></div>
+  </div>
+
+  <div class="sec" id="secFinal" style="display:none">
+    <h3>终局判定</h3>
+    <div class="card evt" id="finalBox"></div>
+  </div>
+
+  <div class="sec" id="secEnding" style="display:none">
+    <h3>新世界的结局</h3>
+    <div class="card ending" id="endingBox"></div>
+  </div>
+
+  <div class="sec">
+    <h3>全体乘客 · 点击卡片查看信息与技能</h3>
+    <div class="roster" id="roster"></div>
+  </div>
+
+  <div class="sec">
+    <h3>方舟通讯</h3>
+    <div class="card evt" id="logBox"></div>
+  </div>
+</div>
+
+<div id="dlg"><div class="dlgbox">
+  <h4 id="dlgTitle"></h4>
+  <div class="dbo" id="dlgBody"></div>
+  <div class="dlgbtns">
+    <button class="btn ghost" onclick="dlgClose(false)">取消</button>
+    <button class="btn" id="dlgOk" onclick="dlgClose(true)">确认</button>
+  </div>
+</div></div>
+<div id="toast"></div>
+
+<script>
+const me = JSON.parse(localStorage.getItem('ark_me') || 'null');
+if (!me || !me.room) { localStorage.removeItem('ark_me'); location.href = '/'; }
+document.getElementById('roomVal').textContent = me.room;
+let S = null, renderedVersion = -1, sel = new Set(), openSet = new Set(), voteListRoundKey = null, needVotes = 6;
+const HAS_PORTRAIT = {};
+
+const PHASE_TEXT = {
+  lobby: ['候船大厅', '等待仲裁官宣布开船。', []],
+  intro: ['方舟启航', '欢迎登船！恭喜各位成为第24号方舟的候选者。但请记住——资源只够 6 人生存至新世界。', ['登船']],
+  draw: ['抽取角色卡', '点击"抽取角色卡"，领取你的身份。', ['登船','抽卡']],
+  teamup: ['组队结识', '与身边的人自由组队。每名玩家每轮拥有 6 张选票（可投自己）。互相认识，也互相提防。', ['登船','抽卡','组队']],
+  speech: ['明面陈述', '公布上一暗面的杀人记录 → 台上为自己辩护：阐述你为何值得一个席位。', ['登船','抽卡','组队','陈述']],
+  vote: ['明面投票', '行使你的选票，可以投自己。票数实时公开（累计：各轮相加）。', ['登船','抽卡','组队','陈述','投票']],
+  top6: ['票选公布', '查看累计票选排行，前六名一目了然。', ['登船','抽卡','组队','陈述','投票','公布']],
+  dark: ['暗面回合', '阴影中的利刃。暗杀/保护由仲裁官统一执行——请各阵营私下向仲裁官申报行动。', ['登船','抽卡','组队','陈述','投票','暗面']],
+  settle: ['结算', '仲裁官正在结算资源与淘汰名单。', ['登船','抽卡','组队','陈述','投票','结算']],
+  final: ['终局', '最终的幸存者已经产生。', ['终局']],
+  ending: ['尾声', '历史书写的，永远是幸存者的故事。', ['终局','结局']]
+};
+const FAC_NAME = { order: '秩序重建派 ✅', free: '自由求生派 ⭕️', moral: '道德捍卫派 ❌' };
+const FAC_SKILL = {
+  order: '【暗杀】暗面回合，全阵营共享 3 次杀人机会，每次消耗 1 点 SP。⚠️ 由仲裁官统一执行——请把你想暗杀的目标私下告诉仲裁官。',
+  free: '【保护】暗面回合，全阵营共享 2 次保护机会，被保护者免疫本轮暗杀，每次消耗 1 点 SP。⚠️ 由仲裁官统一执行——请把你想保护的人私下告诉仲裁官。',
+  moral: '【救治】杀人结果公布后的明面阶段：全阵营共享 2 次救治机会，每次消耗 2 点 SP。⚠️ 由仲裁官统一执行——想救人请告知仲裁官。'
+};
+const FAC_COLOR = { order: 'var(--order)', free: 'var(--free)', moral: 'var(--moral)' };
+
+fetch('/api/roles').then(r => r.json()).then(d => { Object.assign(HAS_PORTRAIT, d.portraits || {}); renderedVersion = -1; refresh(); }).catch(() => {});
+
+async function api(path, body) {
+  body.room = me.room; // 所有玩家请求都携带房间号
+  const r = await fetch('/api/' + path, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(body) });
+  return r.json();
+}
+// 页内弹窗 / 提示（替代原生 confirm/alert，避免被浏览器拦截）
+let dlgResolve = null;
+function ask(opt) {
+  return new Promise(resolve => {
+    dlgResolve = resolve;
+    document.getElementById('dlgTitle').textContent = opt.title || '确认';
+    document.getElementById('dlgBody').innerHTML = (opt.body || '').replace(/\n/g, '<br>');
+    const ok = document.getElementById('dlgOk');
+    ok.textContent = opt.ok || '确认';
+    ok.className = 'btn' + (opt.danger ? ' danger' : '');
+    document.getElementById('dlg').classList.add('show');
+  });
+}
+function dlgClose(isOk) {
+  document.getElementById('dlg').classList.remove('show');
+  const r = dlgResolve; dlgResolve = null;
+  if (r) r({ ok: isOk });
+}
+let toastTimer = null;
+function toast(msg, type) {
+  const t = document.getElementById('toast');
+  t.textContent = msg;
+  t.className = 'show' + (type ? ' ' + type : '');
+  clearTimeout(toastTimer);
+  toastTimer = setTimeout(() => { t.className = ''; }, 2400);
+}
+async function sacrificeAsk() {
+  const r = await ask({ title:'主动牺牲', body:'你将立即选择死亡，方舟资源 +10。此操作不可撤销。', ok:'确认牺牲', danger:true });
+  if (!r.ok) return;
+  darkAct('maria_sacrifice');
+}
+async function draw() {
+  const d = await api('draw', { id: me.id });
+  if (d.error) { document.getElementById('drawMsg').textContent = d.error; return; }
+  renderedVersion = -1; refresh();
+}
+async function setGroup() { await api('setgroup', { id: me.id, group: document.getElementById('groupSel').value }); }
+
+// 立绘：有图完整显示（contain，不裁切），小头像顶部对齐裁切；无图显示首字占位
+function portrait(p, w, h, objfit) {
+  const c = FAC_COLOR[p.faction] || '#3c4a63';
+  const st = `width:${w}px;height:${h}px`;
+  if (p.roleId && HAS_PORTRAIT[p.roleId]) {
+    return `<div class="pic-frame" style="${st}"><img src="/portraits/${p.roleId}.png?v=2" style="object-fit:${objfit || 'contain'}" alt="${p.roleName}"></div>`;
+  }
+  return `<div class="pic-frame" style="${st}"><div class="pic-fb" style="background:${c}">${p.roleId ? p.roleName[0] : (p.name || '?')[0]}</div></div>`;
+}
+function avatar(p) {
+  const c = FAC_COLOR[p.faction] || '#3c4a63';
+  if (p.roleId && HAS_PORTRAIT[p.roleId]) return `<span class="pt"><img src="/portraits/${p.roleId}.png?v=2" alt=""></span>`;
+  return `<span class="pt pic-fb" style="background:${c}">${p.roleId ? p.roleName[0] : (p.name || '?')[0]}</span>`;
+}
+function show(id) { document.getElementById(id).style.display = 'block'; }
+
+function renderMyCard(m) {
+  const p = m.me, f = p.faction;
+  return `
+    <div class="frame">${portrait(p, 190, 285, 'contain')}</div>
+    <div class="info">
+      <div class="rn">${p.roleName} <span class="fac ${f}">${FAC_NAME[f]}</span> <span class="kv2" style="font-size:13px">${p.gender}</span></div>
+      <div class="krow"><span class="kl">核心价值 / 技能</span><br><span class="kv2">${p.value}</span></div>
+      ${p.specialText ? `<div class="krow"><span class="kl">特殊技能</span><br><span class="kv2">${p.specialText}</span></div>` : ''}
+      <div class="krow"><span class="kl">我的秘密 / 缺陷</span><br><span class="secret">${p.secret || ''}</span></div>
+      <div class="krow"><span class="kl">我的阵营</span><br><span class="kv2">${FAC_NAME[f]} —— ${FAC_SKILL[f]}</span></div>
+      <div class="krow"><span class="kl">阵营目标</span><br><span class="kv2">最终 6 位幸存者中，至少 4 位是本阵营成员。</span></div>
+      <div class="krow"><span class="kl">资源效果</span><br><span class="kv2">${p.spRoundText}；${p.spFinalText || ''}</span></div>
+      <div class="krow"><span class="kl">潜在议题</span><br><span class="kv2" style="font-style:italic">${p.issue}</span></div>
+    </div>`;
+}
+
+function renderDark(m) {
+  const box = document.getElementById('darkBox');
+  const du = m.darkUsedThisRound || {}, f = m.me.faction;
+  const alive = m.roster.filter(p => p.alive);
+  let html = '';
+  if (!m.me.alive) html = '<div class="kv2">死者没有技能。静静看着他们吧。</div>';
+  else if (!m.me.roleId) html = '<div class="kv2">尚未抽取角色。</div>';
+  else {
+    if (f === 'order') {
+      html += `<div class="kv2" style="margin-bottom:10px">${FAC_SKILL.order}<br>本阵营本轮剩余：<b style="color:var(--gold)">${m.quotas.kill}</b> 次。</div>`;
+      if (du.kill) html += `<div class="msg ok">✓ 你本轮已申报过 ${du.kill} 次暗杀。</div>`;
+    }
+    if (f === 'free') {
+      html += `<div class="kv2" style="margin-bottom:10px">${FAC_SKILL.free}<br>本阵营本轮剩余：<b style="color:var(--gold)">${m.quotas.protect}</b> 次。</div>`;
+      if (du.protect) html += `<div class="msg ok">✓ 你本轮已申报过 ${du.protect} 次保护。</div>`;
+    }
+    if (f === 'moral') html += `<div class="kv2">暗面阶段道德捍卫派没有行动。<br>${FAC_SKILL.moral}<br><b style="color:var(--gold)">→ 暗杀结果将在下一个明面公布，届时想救人请立刻告知仲裁官。</b></div>`;
+    if (m.me.roleId === 26) html += `<div class="krow"><span class="kl">集体裁决</span><br><span class="kv2">每轮一次：公开提议淘汰一人，若过半数存活玩家明面同意则其直接死亡。请口头进行，由主持人在控制台执行。</span></div>`;
+    if (m.me.roleId === 29) {
+      if (!du.eavesdrop) html += `<div class="krow"><span class="kl">窃听</span><br><span class="kv2">每轮一次：随机获知一名本轮使用过暗面技能的玩家身份。</span></div><button class="btn sm" onclick="darkAct('eavesdrop')">📡 窃听</button>`;
+      else html += `<div class="msg ok">✓ 你本轮已窃听——请向主持人确认结果。</div>`;
+    }
+    if (m.me.roleId === 3) {
+      if (!du.sacrifice) html += `<div class="krow"><span class="kl">主动牺牲</span><br><span class="kv2">若你主动选择死亡，方舟资源 +10。圣母的选择。</span></div><button class="btn sm danger" onclick="sacrificeAsk()">🕊️ 主动牺牲</button>`;
+      else html += `<div class="msg ok">✓ 你已选择牺牲，结算时生效。</div>`;
+    }
+    html += `<div class="evt" style="margin-top:12px;border-color:rgba(240,180,41,.35)">🤫 暗面行动由<b style="color:var(--gold)">仲裁官</b>统一执行。各阵营请安静地、私下地向仲裁官申报行动（执行人+目标）——不要让其他阵营听见。</div>`;
+  }
+  box.innerHTML = html || '<div class="kv2">本轮你没有可用的暗面技能。保存体力，明面见。</div>';
+}
+async function darkAct(act) { // 仅剩窃听/主动牺牲等个人技能；暗杀/保护/救治由仲裁官执行
+  const body = { id: me.id, action: act };
+  const d = await api('dark', body);
+  if (d.error) toast(d.error, 'bad');
+  renderedVersion = -1; refresh();
+}
+
+function renderKillRecord(m) {
+  const box = document.getElementById('killBox');
+  const recs = m.lastKillRecord || [];
+  let html = '';
+  if (!recs.length) {
+    html = '<div class="kv2">上一轮暗面风平浪静——没有人被暗杀。</div>';
+  } else {
+    html = recs.map(k => `<div class="evt" style="margin-bottom:6px">🔪 第${k.round}轮：<b>${k.by}</b>（${k.byRole}）杀了 <b>${k.targetName}</b>${k.saved ? ` —— 被 <b>${k.savedBy}</b>（自由求生派）保护，暗杀未生效` : ' —— 已身亡'}</div>`).join('');
+  }
+  // 道德捍卫派救治提示（救治由仲裁官执行）
+  const f = m.me.faction;
+  const rev = m.revivable || [];
+  if (m.me.alive && f === 'moral' && rev.length) {
+    const revNames = rev.map(id => { const p = m.roster.find(x => x.id === id); return p ? p.name : id; }).join('、');
+    html += `<div style="margin-top:12px;padding-top:12px;border-top:1px dashed var(--line)">
+      <div class="kl" style="margin-bottom:6px">❌ 救治窗口 · 道德捍卫派</div>
+      <div class="kv2">以下乘客被暗杀身亡：<b style="color:#ffadad">${revNames}</b>。想救治请立刻私下告知仲裁官（每次消耗 2 点 SP）。本阵营剩余：<b style="color:var(--gold)">${m.quotas.heal}</b> 次。</div></div>`;
+  } else if (f === 'moral' && m.me.alive && !rev.length && recs.length) {
+    html += `<div class="kv2" style="margin-top:10px">没有需要救治的乘客（或已被救治）。</div>`;
+  }
+  box.innerHTML = html;
+}
+
+function renderVoteList(m) {
+  const alive = m.roster.filter(p => p.alive);
+  needVotes = Math.min(6, alive.length);
+  document.getElementById('slotRow').innerHTML =
+    Array.from({length: needVotes}, (_, i) => `<span class="slot" id="s${i}">${i + 1}</span>`).join('') +
+    `<span class="kv2" style="font-size:12.5px;margin-left:6px">点击乘客选择 / 取消（可投自己，不能重复）</span>`;
+  document.getElementById('voteBtn').textContent = `🗳️ 提交选票（${needVotes} 票）`;
+  const box = document.getElementById('voteList');
+  if (m.myVotes) { box.innerHTML = '<div class="ok msg" style="margin:0">✅ 你已完成投票，等待其他乘客。</div>'; return; }
+  box.innerHTML = alive.map(p => `
+    <div class="vline ${sel.has(p.id) ? 'sel' : ''}" data-vid="${p.id}" onclick="toggleVote('${p.id}',this)">
+      ${avatar(p)} <b>${p.name}</b>${p.id === m.me.id ? '<span style="color:var(--gold);font-size:11px">（你自己）</span>' : `<span style="color:var(--faint);font-size:11.5px">${p.roleName}</span>`}
+    </div>`).join('');
+}
+function toggleVote(id, el) {
+  if (sel.has(id)) { sel.delete(id); el.classList.remove('sel'); }
+  else { if (sel.size >= needVotes) { toast(`最多选 ${needVotes} 人`, 'bad'); return; } sel.add(id); el.classList.add('sel'); }
+  document.querySelectorAll('.slot').forEach((s, i) => s.classList.toggle('on', i < sel.size));
+}
+async function submitVote() {
+  if (S && S.me && !S.me.alive) { toast('你已出局，没有投票权', 'bad'); return; }
+  if (sel.size !== needVotes) { toast(`必须恰好投出 ${needVotes} 票`, 'bad'); return; }
+  const d = await api('vote', { id: me.id, targets: [...sel] });
+  if (d.error) { document.getElementById('voteMsg').textContent = d.error; return; }
+  sel.clear(); renderedVersion = -1; refresh();
+}
+
+function renderRoster(m) {
+  document.getElementById('roster').innerHTML = m.roster.map(p => {
+    const facTag = p.faction ? `<span class="fac ${p.faction}">${{order:'秩序✅',free:'自由⭕️',moral:'道德❌'}[p.faction]}</span>` : '';
+    const open = openSet.has(p.id);
+    return `<div class="pl ${p.alive ? '' : 'dead'} ${open ? 'open' : ''}" data-pid="${p.id}" onclick="toggleOpen('${p.id}',this)">
+      <div class="head">${avatar(p)}
+        <div style="flex:1;min-width:0"><div class="nm">${p.name} ${p.alive ? '' : '☠️'}</div>
+        <div class="rl">${p.roleName} ${facTag} ${p.group ? '· 第' + p.group + '组' : ''}</div></div>
+        <span class="caret">${open ? '▲' : '▼'}</span></div>
+      ${p.alive ? '' : `<div class="rl" style="margin-top:6px;color:#ff9b9b">${p.cause || '已出局'}</div>`}
+      <div class="vv"><b>技能：</b>${p.value}${p.specialText ? '<br><b>特殊：</b>' + p.specialText : ''}<br><b>议题：</b>${p.issue}${p.secret ? '<br><b style="color:#ff9b9b">秘密（仅你可见）：</b>' + p.secret : ''}</div>
+    </div>`;
+  }).join('');
+}
+function toggleOpen(id, el) {
+  if (openSet.has(id)) { openSet.delete(id); el.classList.remove('open'); el.querySelector('.caret').textContent = '▼'; }
+  else { openSet.add(id); el.classList.add('open'); el.querySelector('.caret').textContent = '▲'; }
+}
+
+function renderRank(m) {
+  if (!m.ranking) return;
+  document.getElementById('rankBox').innerHTML = (m.ranking.map((x, i) => `
+    <div class="rankrow ${i < 6 ? 'top6' : ''}"><span class="no">${i + 1}</span>
+      <span style="flex:1">${x.name}（${x.roleName || '—'}）</span>
+      <span style="text-align:right">${x.count} 票${x.curCount !== undefined ? `<div style="font-size:11px;color:var(--faint)">本轮 +${x.curCount}</div>` : ''}</span>${i < 6 ? '⭐' : ''}</div>`).join('')
+    || '<div class="kv2">暂无票数。</div>')
+    + '<div class="kv2" style="margin-top:8px;font-size:12px">⭐ 金色为前六名 · 票数为<b style="color:var(--gold)">累计</b>（第一轮起各轮相加），列出全部存活乘客（含 0 票）</div>';
+}
+
+function rerender() {
+  if (!S) return;
+  const m = S;
+  document.getElementById('who').textContent = m.me.name;
+  document.getElementById('spVal').textContent = m.sp;
+  document.getElementById('aliveVal').textContent = m.aliveCount + '/' + m.totalCount;
+  document.getElementById('roundVal').textContent = m.round || '—';
+  const ptd = (PHASE_TEXT[m.phase] || ['…', '', []]);
+  document.getElementById('phK').textContent = ptd[0].replace('R', m.round || '—');
+  document.getElementById('phT').textContent = ptd[1].replace('R', m.round || '—');
+  document.getElementById('phD').textContent = ptd[1].replace('R', m.round || '—');
+  document.getElementById('phD').textContent = ptd[1].replace('R', m.round || '—');
+  document.getElementById('phSteps').innerHTML = ptd[2].map(s => `<span class="step on">${s}</span>`).join('');
+  document.getElementById('deadBanner').style.display = m.me.alive ? 'none' : 'block';
+
+  ['secIntro','secDraw','secMyCard','secTeam','secSpeech','secKill','secVote','secDark','secRank','secSettle','secFinal','secEnding'].forEach(id => document.getElementById(id).style.display = 'none');
+  if (m.phase === 'lobby' || m.phase === 'intro') show('secIntro');
+  if (m.phase === 'draw') show('secDraw');
+  if (m.me.roleId) { show('secMyCard'); document.getElementById('myCard').innerHTML = renderMyCard(m); }
+  if (m.phase === 'teamup') { show('secTeam'); if (m.me.group) document.getElementById('groupSel').value = m.me.group; }
+  if (m.phase === 'speech') {
+    show('secSpeech');
+    document.getElementById('speechText').innerHTML = m.round === 1 ? '【第一轮 · 公开选举】所有乘客依次上台自我介绍，并为自己捍卫留在方舟的理由。' : '【自由竞选】本轮为自由上台竞选——想活下来，就主动走上台。';
+    show('secKill'); renderKillRecord(m);
+  }
+  if (m.phase === 'vote') {
+    show('secVote');
+    const listEl = document.getElementById('voteList');
+    if (!m.me.alive || m.canVote === false) { // 死者无投票权：隐藏选票界面
+      document.getElementById('slotRow').innerHTML = '';
+      document.getElementById('voteBtn').style.display = 'none';
+      document.getElementById('voteDone').textContent = '';
+      document.getElementById('voteMsg').textContent = '';
+      listEl.innerHTML = '<div class="evt" style="border-color:rgba(255,107,107,.45);color:#ffb3b3">☠️ 你已出局，<b>没有投票权</b>。安静地看着他们投票吧。</div>';
+      return;
+    }
+    document.getElementById('voteBtn').style.display = '';
+    const rk = m.round + '_' + (m.myVotes ? 'done' : 'open');
+    if (rk !== voteListRoundKey) { voteListRoundKey = rk; renderVoteList(m); }
+    else if (m.myVotes) renderVoteList(m);
+    else document.getElementById('voteDone').textContent = `场上已有 ${m.votedCount} / ${m.aliveCount} 人投票`;
+  }
+  if (m.phase === 'dark') { show('secDark'); renderDark(m); show('secRank'); renderRank(m); }
+  if (m.phase === 'top6') { show('secRank'); renderRank(m); }
+  if (m.phase === 'settle') { show('secSettle'); show('secRank'); renderRank(m); document.getElementById('settleBox').innerHTML = (m.lastSettle?.events || ['结算中…']).map(e => `<div>${e}</div>`).join(''); }
+  if (m.phase === 'final' && m.finalResult) { show('secFinal'); const f = m.finalResult;
+    document.getElementById('finalBox').innerHTML = `<div>幸存者：${f.survivors.map(s => s.roleName + '（' + s.name + '）').join('、')}</div>
+      <div>剩余资源 SP：${f.sp}</div><div>阵营票数：秩序✅ ${f.factionCount.order} · 自由⭕️ ${f.factionCount.free} · 道德❌ ${f.factionCount.moral}（≥4 获胜）</div>
+      <div>获胜阵营：${f.factionWinners.map(k => FAC_NAME[k]).join('、') || '无'}</div>
+      <div>资源明细：${f.detail.join('；') || '无'}</div>`; }
+  if (m.phase === 'ending' && m.ending) { show('secEnding'); document.getElementById('endingBox').textContent = m.ending.text; if (m.finalResult) show('secFinal'); }
+  if (['top6','dark','settle','final','ending'].includes(m.phase)) { show('secRank'); renderRank(m); }
+  renderRoster(m);
+  document.getElementById('logBox').innerHTML = m.logs.map(l => `<div>${l.msg}</div>`).join('');
+}
+
+async function refresh() {
+  const m = await api('view', { id: me.id });
+  if (m.error === '找不到玩家，请重新加入') { localStorage.removeItem('ark_me'); location.href = '/'; return; }
+  S = m;
+  if (m.version !== renderedVersion) { renderedVersion = m.version; rerender(); }
+}
+refresh();
+setInterval(refresh, 2000);
+</script>
+</body>
+</html>

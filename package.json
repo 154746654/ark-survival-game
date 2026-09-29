@@ -1,0 +1,11 @@
+{
+  "name": "ark-survival-game",
+  "version": "1.0.0",
+  "private": true,
+  "description": "人性天平·方舟求生 —— 明暗抉择逃生游戏",
+  "main": "server.js",
+  "scripts": {
+    "start": "node server.js"
+  },
+  "dependencies": {}
+}

@@ -1,0 +1,11 @@
+# 游戏存档（含玩家信息，绝不入库）
+data/
+
+# 美术素材不入库（可自行放置，见 README 素材位说明）
+portraits/
+public/img/
+
+# 系统与依赖
+.DS_Store
+node_modules/
+*.log
